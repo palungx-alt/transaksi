@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dashboard Transaksi - RAJ Group</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #f0fdf4;
+            --card-bg: #ffffff;
+            --raj-dark: #14532d;
+            --raj-primary: #16a34a;
+            --raj-glow: rgba(22, 163, 74, 0.15);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #dcfce7;
+            --shadow-card: 0 10px 30px -10px rgba(20, 83, 45, 0.1);
+            
+            --color-jual: #059669;
+            --color-jual-bg: #d1fae5;
+            --color-beli: #ca8a04;
+            --color-beli-bg: #fef9c3;
+            --color-margin-pos: #16a34a;
+            --color-margin-neg: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background-color: var(--bg-body);
+            background-image: radial-gradient(circle at 10% 20%, rgba(22, 163, 74, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(20, 83, 45, 0.05) 0%, transparent 40%);
+            color: var(--text-main); 
+            min-height: 100vh;
+            display: flex; justify-content: center; padding: 1.5rem 1rem;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .main-wrapper { width: 100%; max-width: 1100px; }
+
+        /* --- LOGIN --- */
+        .login-screen { min-height: 80vh; display: flex; align-items: center; justify-content: center; }
+        .login-card {
+            background: var(--card-bg); border-radius: 24px; padding: 3rem 2rem;
+            width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(20, 83, 45, 0.15);
+            border: 1px solid var(--border-color); text-align: center;
+        }
+        .login-logo { width: 80px; height: 80px; margin: 0 auto 1rem; display: block; object-fit: contain; }
+        .login-card h1 { font-family: 'Poppins', sans-serif; font-size: 1.5rem; color: var(--raj-dark); margin-bottom: 0.4rem; }
+        .login-card p.subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+        .form-group { margin-bottom: 1.2rem; text-align: left; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--raj-dark); }
+        .form-group input {
+            width: 100%; padding: 0.9rem 1rem; border: 1px solid var(--border-color); border-radius: 12px;
+            font-size: 1rem; outline: none; font-family: 'Inter', sans-serif; background: #f8fafc;
+        }
+        .form-group input:focus { border-color: var(--raj-primary); box-shadow: 0 0 0 3px var(--raj-glow); background: white; }
+        .btn-login {
+            width: 100%; padding: 1rem; border: none; border-radius: 12px;
+            background: var(--raj-dark); color: white; font-size: 1rem; font-weight: 600;
+            cursor: pointer; margin-top: 0.5rem; transition: 0.3s;
+        }
+        .btn-login:hover { background: var(--raj-primary); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(22, 163, 74, 0.3); }
+        .error-msg { color: #ef4444; font-size: 0.85rem; text-align: center; margin-top: 1rem; display: none; }
+
+        /* --- HEADER --- */
+        .header-clean {
+            background: var(--card-bg); border-radius: 24px; padding: 1.5rem;
+            margin-bottom: 1.5rem; text-align: center;
+            box-shadow: var(--shadow-card); border: 1px solid var(--border-color);
+            position: relative; overflow: hidden;
+        }
+        .header-clean::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, var(--raj-dark), var(--raj-primary), var(--raj-dark));
+        }
+        .header-top { display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+        .logo-img { width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .header-clean h1 { font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--raj-dark); letter-spacing: -0.5px; }
+        .header-clean p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.2rem; font-weight: 500; }
+        .user-bar {
+            margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;
+        }
+        .user-badge { background: var(--raj-light); color: var(--raj-dark); padding: 0.4rem 1rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-logout { background: none; border: 1px solid var(--border-color); padding: 0.4rem 1rem; border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; transition: 0.2s; }
+        .btn-logout:hover { background: #fee2e2; color: #ef4444; border-color: #fca5a5; }
+
+        /* --- SUMMARY CARDS --- */
+        .summary-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .summary-card {
+            background: var(--card-bg); border-radius: 20px; padding: 1.2rem;
+            box-shadow: var(--shadow-card); border: 1px solid var(--border-color);
+            text-align: center; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .summary-card::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 4px;
+            background: var(--raj-primary); opacity: 0.5;
+        }
+        .summary-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem; }
+        .summary-value { font-family: 'Poppins', sans-serif; font-size: 1.4rem; font-weight: 800; color: var(--raj-dark); }
+        
+        .tab-jual .summary-card:nth-child(3)::after { background: var(--color-jual); }
+        .tab-jual .summary-card:nth-child(3) .summary-value { color: var(--color-jual); }
+        .tab-beli .summary-card:nth-child(3)::after { background: var(--color-beli); }
+        .tab-beli .summary-card:nth-child(3) .summary-value { color: var(--color-beli); }
+        .tab-margin .summary-card:nth-child(3)::after { background: var(--color-margin-pos); }
+        .tab-margin .summary-card:nth-child(3) .summary-value.positive { color: var(--color-margin-pos); }
+        .tab-margin .summary-card:nth-child(3) .summary-value.negative { color: var(--color-margin-neg); }
+
+        /* --- TABS --- */
+        .type-tabs {
+            display: flex; gap: 0.5rem; margin-bottom: 1.5rem; 
+            background: var(--card-bg); padding: 0.5rem; border-radius: 16px;
+            border: 1px solid var(--border-color); box-shadow: var(--shadow-card);
+        }
+        .tab-btn {
+            flex: 1; padding: 0.9rem; border: none; border-radius: 12px;
+            background: transparent; color: var(--text-muted); 
+            font-family: 'Inter', sans-serif; font-weight: 700; font-size: 0.95rem;
+            cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+        }
+        .tab-btn:hover { background: var(--raj-light); color: var(--raj-dark); }
+        .tab-btn.active { background: var(--raj-dark); color: white; box-shadow: 0 4px 15px rgba(20, 83, 45, 0.2); transform: translateY(-2px); }
+        .tab-btn[data-tab="penjualan"].active { background: var(--color-jual); }
+        .tab-btn[data-tab="pembelian"].active { background: var(--color-beli); }
+        .tab-btn[data-tab="margin"].active { background: var(--raj-primary); }
+
+        /* --- FILTER BAR --- */
+        .filter-bar {
+            background: var(--card-bg); border-radius: 20px; padding: 1.2rem;
+            margin-bottom: 1.5rem; box-shadow: var(--shadow-card); border: 1px solid var(--border-color);
+            display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
+        }
+        .filter-section { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; flex: 1; }
+        .filter-label { font-size: 0.9rem; font-weight: 700; color: var(--raj-dark); margin-right: 0.5rem; white-space: nowrap; display: flex; align-items: center; gap: 0.5rem; }
+        
+        .period-btn {
+            padding: 0.6rem 1rem; border: 1px solid var(--border-color); border-radius: 10px;
+            background: white; color: var(--text-muted); font-weight: 600; font-size: 0.85rem;
+            cursor: pointer; transition: 0.2s; white-space: nowrap;
+        }
+        .period-btn:hover { border-color: var(--raj-primary); color: var(--raj-primary); }
+        .period-btn.active { background: var(--raj-dark); color: white; border-color: var(--raj-dark); box-shadow: 0 2px 8px rgba(20, 83, 45, 0.2); }
+        
+        .date-input, .month-select {
+            padding: 0.6rem 1rem; border: 1px solid var(--border-color); border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; background: white;
+            flex: 1; min-width: 140px; color: var(--text-main); font-weight: 500;
+        }
+        .date-input:focus, .month-select:focus { border-color: var(--raj-primary); box-shadow: 0 0 0 3px var(--raj-glow); }
+
+        .btn-export {
+            padding: 0.7rem 1.4rem; border: none; border-radius: 12px;
+            background: var(--raj-dark); color: white; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; display: flex; align-items: center; gap: 0.5rem;
+            white-space: nowrap; transition: 0.3s; box-shadow: 0 4px 10px rgba(20, 83, 45, 0.2);
+        }
+        .btn-export:hover { background: var(--raj-primary); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(22, 163, 74, 0.3); }
+
+        /* --- GROUPED LIST VIEW --- */
+        .grouped-list { display: flex; flex-direction: column; gap: 1rem; }
+        
+        .vendor-card {
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            box-shadow: var(--shadow-card); border: 1px solid var(--border-color);
+            transition: transform 0.2s;
+        }
+        .vendor-card:hover { transform: translateY(-3px); box-shadow: 0 15px 35px -10px rgba(20, 83, 45, 0.15); }
+        
+        .vendor-header {
+            padding: 1.2rem 1.5rem; display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to right, #f0fdf4, #ffffff); border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap; gap: 0.8rem;
+        }
+        .vendor-info { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; }
+        .vendor-icon {
+            width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+            background: var(--raj-light); color: var(--raj-dark);
+        }
+        .tab-beli .vendor-icon { background: var(--color-beli-bg); color: var(--color-beli); }
+        .tab-jual .vendor-icon { background: var(--color-jual-bg); color: var(--color-jual); }
+        
+        .vendor-details { display: flex; flex-direction: column; min-width: 0; }
+        .vendor-name { font-weight: 800; color: var(--raj-dark); font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: 'Poppins', sans-serif; }
+        .vendor-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; display: flex; align-items: center; gap: 0.5rem; }
+        .vendor-date-badge { background: white; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-weight: 600; color: var(--raj-primary); }
+        
+        .vendor-stats { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+        .vendor-total { font-family: 'Poppins', sans-serif; font-weight: 800; color: var(--raj-dark); font-size: 1.2rem; }
+        .tab-jual .vendor-total { color: var(--color-jual); }
+        .tab-beli .vendor-total { color: var(--color-beli); }
+        
+        .vendor-weight { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+
+        .vendor-table-wrapper { overflow-x: auto; padding: 0.5rem; }
+        .vendor-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        .vendor-table th {
+            background: #f8fafc; color: var(--text-muted); padding: 0.8rem 1rem;
+            text-align: left; font-weight: 700; font-size: 0.75rem; text-transform: uppercase;
+            letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color);
+        }
+        .vendor-table td {
+            padding: 0.9rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem;
+            color: var(--text-main);
+        }
+        .vendor-table tr:last-child td { border-bottom: none; }
+        .vendor-table tr:hover td { background: #f0fdf4; }
+        .vendor-table .text-right { text-align: right; }
+        .vendor-table .text-center { text-align: center; }
+        
+        .status-badge {
+            display: inline-block; padding: 0.25rem 0.7rem; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px;
+        }
+        .status-paid { background: var(--raj-light); color: var(--raj-dark); border: 1px solid rgba(22, 163, 74, 0.2); }
+        .status-pending { background: #fef3c7; color: #92400e; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+        /* --- MARGIN SPECIFIC --- */
+        .margin-positive { color: var(--color-margin-pos); font-weight: 800; }
+        .margin-negative { color: var(--color-margin-neg); font-weight: 800; }
+
+        .empty-state { text-align: center; padding: 4rem 1rem; color: var(--text-muted); background: var(--card-bg); border-radius: 20px; border: 2px dashed var(--border-color); }
+        .empty-state i { font-size: 3.5rem; opacity: 0.2; margin-bottom: 1rem; display: block; color: var(--raj-dark); }
+        .empty-state p { font-size: 1rem; font-weight: 500; }
+
+        /* --- CUSTOM CALENDAR STYLES FOR INDICATORS --- */
+        ::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            transition: 0.2s;
+        }
+        ::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+        
+        /* Kita tidak bisa styling native date picker secara mendalam, 
+           jadi kita buat overlay visual sederhana jika memungkinkan, 
+           atau biarkan native tapi pastikan UX tetap baik.
+           Untuk indikator tanggal, karena input type="date" native sangat terbatas,
+           kita akan menambahkan teks helper di sebelahnya saat mode 'today' aktif. */
+           
+        .date-helper-text {
+            font-size: 0.75rem; color: var(--raj-primary); font-weight: 600;
+            margin-left: 0.5rem; display: none;
+        }
+
+        /* --- MOBILE OPTIMIZATION --- */
+        @media (max-width: 768px) {
+            body { padding: 0.8rem 0.5rem; }
+            .summary-grid { grid-template-columns: 1fr; gap: 0.8rem; }
+            .summary-value { font-size: 1.3rem; }
+            .header-top { flex-direction: column; gap: 0.5rem; }
+            .header-clean h1 { font-size: 1.2rem; }
+            
+            .filter-bar { flex-direction: column; align-items: stretch; gap: 1rem; padding: 1rem; }
+            .filter-section { flex-direction: column; align-items: stretch; width: 100%; }
+            .period-btn { width: 100%; text-align: center; padding: 0.8rem; font-size: 0.9rem; }
+            .date-input, .month-select { width: 100%; padding: 0.8rem; }
+            .btn-export { width: 100%; justify-content: center; padding: 0.9rem; font-size: 0.95rem; }
+            
+            .tab-btn { font-size: 0.9rem; padding: 0.8rem; }
+            .tab-btn span { display: inline; } 
+            
+            .vendor-header { padding: 1rem; flex-direction: column; align-items: flex-start; }
+            .vendor-stats { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-color); }
+            .vendor-name { font-size: 1rem; }
+            .vendor-total { font-size: 1.1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <!-- LOGIN SCREEN -->
+        <div id="loginScreen" class="login-screen">
+            <div class="login-card">
+                <img src="logo.png" alt="RAJ Logo" class="login-logo" onerror="this.style.display='none'">
+                <h1>Dashboard Transaksi</h1>
+                <p class="subtitle">CV Rezeki Amanah Jaya Group</p>
+                <form id="loginForm" onsubmit="handleLogin(event)">
+                    <div class="form-group"><label>Username</label><input type="text" id="username" required placeholder="Masukkan username staf"></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="password" required placeholder="Masukkan password"></div>
+                    <button type="submit" class="btn-login" id="loginBtn">Masuk Dashboard</button>
+                    <div class="error-msg" id="errorMsg"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard" style="display:none;" class="tab-jual">
+            <header class="header-clean">
+                <div class="header-top">
+                    <img src="logo.png" alt="RAJ Logo" class="logo-img" onerror="this.style.display='none'">
+                    <div>
+                        <h1>REZEKI AMANAH JAYA GROUP</h1>
+                        <p>Supplier & Waste Solution Partner</p>
+                    </div>
+                </div>
+                <div class="user-bar">
+                    <span class="user-badge" id="userBadge"><i class="fa-solid fa-user-circle"></i> Memuat...</span>
+                    <button onclick="logout()" class="btn-logout"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+                </div>
+            </header>
+
+            <!-- SUMMARY -->
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-label" id="sumLabel1">Total Transaksi</div>
+                    <div class="summary-value" id="sumCount">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label" id="sumLabel2">Total Berat</div>
+                    <div class="summary-value" id="sumWeight">0 Kg</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label" id="sumLabel3">Total Nominal</div>
+                    <div class="summary-value" id="sumTotal">Rp 0</div>
+                </div>
+            </div>
+
+            <!-- TABS -->
+            <div class="type-tabs">
+                <button class="tab-btn active" data-tab="penjualan" onclick="setTab('penjualan', this)">
+                    <i class="fa-solid fa-chart-line"></i> <span>Penjualan</span>
+                </button>
+                <button class="tab-btn" data-tab="pembelian" onclick="setTab('pembelian', this)">
+                    <i class="fa-solid fa-cart-shopping"></i> <span>Pembelian</span>
+                </button>
+                <button class="tab-btn" data-tab="margin" onclick="setTab('margin', this)">
+                    <i class="fa-solid fa-scale-balanced"></i> <span>Margin</span>
+                </button>
+            </div>
+
+            <!-- FILTER BAR -->
+            <div class="filter-bar">
+                <div class="filter-section">
+                    <span class="filter-label"><i class="fa-regular fa-calendar-check"></i> Periode:</span>
+                    <!-- Default aktif adalah Pilih Bulan sesuai permintaan -->
+                    <button class="period-btn" onclick="setPeriod('today', this)">Pilih Tanggal</button>
+                    <button class="period-btn active" onclick="setPeriod('month', this)">Pilih Bulan</button>
+                    <button class="period-btn" onclick="setPeriod('all', this)">Semua Data</button>
+                </div>
+                
+                <div class="filter-section" id="customDateGroup" style="display:none;">
+                    <input type="date" id="specificDate" class="date-input">
+                    <span class="date-helper-text" id="dateHelperText"></span>
+                    <button class="period-btn" onclick="applySpecificDate()">Terapkan</button>
+                </div>
+
+                <div class="filter-section" id="customMonthGroup">
+                    <select id="monthSelect" class="month-select"></select>
+                    <button class="period-btn" onclick="applySpecificMonth()">Terapkan</button>
+                </div>
+
+                <button class="btn-export" onclick="exportExcel()">
+                    <i class="fa-solid fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+
+            <!-- CONTENT AREA (GROUPED BY VENDOR/CLIENT) -->
+            <div id="groupedListContainer" class="grouped-list"></div>
+            
+            <div id="emptyState" class="empty-state" style="display:none;">
+                <i class="fa-regular fa-folder-open"></i>
+                <p>Tidak ada data transaksi untuk periode ini</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbylgW2dzHDG51D9qHtDJ0K5cwmidBgwK9Y7a1lPEoYRskK0kXRrEUYSbjjAFeOyi-Dz/exec';
+        
+        let session = null;
+        let currentTab = 'penjualan';
+        let currentPeriod = 'month'; // DEFAULT KE BULAN SESUAI PERMINTAAN
+        let allData = { penjualan: [], pembelian: [] };
+        let filteredData = []; 
+        let marginData = [];   
+        let transactionDatesSet = new Set(); // Untuk menyimpan tanggal unik yang punya transaksi
+
+        const formatIDR = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        const formatDate = (dateStr) => {
+            if(!dateStr) return '-';
+            const d = new Date(dateStr);
+            if(isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+        };
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+
+        // ==========================================
+        // LOGIN
+        // ==========================================
+        function checkSession() {
+            const saved = localStorage.getItem('raj_trans_session');
+            if(saved) {
+                try {
+                    session = JSON.parse(saved);
+                    if(new Date().getTime() - new Date(session.loginTime).getTime() < 86400000) { showDashboard(); return true; }
+                } catch(e) {}
+                localStorage.removeItem('raj_trans_session');
+            }
+            return false;
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const errorEl = document.getElementById('errorMsg');
+            btn.disabled = true; btn.textContent = 'Memverifikasi...'; errorEl.style.display = 'none';
+
+            try {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const res = await fetch(`${API_URL}?action=validateDriver&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+                const result = await res.json();
+
+                if(result.status === 'success') {
+                    session = { username: result.driverName || username, role: result.role, loginTime: new Date().toISOString() };
+                    localStorage.setItem('raj_trans_session', JSON.stringify(session));
+                    showDashboard();
+                } else {
+                    errorEl.textContent = result.message || 'Login gagal';
+                    errorEl.style.display = 'block';
+                }
+            } catch(err) {
+                errorEl.textContent = 'Koneksi error.';
+                errorEl.style.display = 'block';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Masuk Dashboard';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('userBadge').innerHTML = `<i class="fa-solid fa-user-circle"></i> ${session.username} (${session.role || 'Staf'})`;
+            
+            initMonthDropdown();
+            loadAllData();
+        }
+
+        function logout() {
+            if(confirm('Yakin ingin keluar?')) {
+                localStorage.removeItem('raj_trans_session');
+                location.reload();
+            }
+        }
+
+        // ==========================================
+        // LOAD DATA
+        // ==========================================
+        async function loadAllData() {
+            try {
+                const res = await fetch(`${API_URL}?action=getTransactions`);
+                const result = await res.json();
+                if(result.status === 'success') {
+                    allData.penjualan = result.penjualan || [];
+                    allData.pembelian = result.pembelian || [];
+                    
+                    // PRE-CALCULATE TRANSACTION DATES FOR INDICATOR
+                    transactionDatesSet.clear();
+                    [...allData.penjualan, ...allData.pembelian].forEach(tx => {
+                        if(tx.Tanggal || tx.tanggal) {
+                            // Simpan dalam format YYYY-MM-DD agar cocok dengan value input date
+                            const d = new Date(tx.Tanggal || tx.tanggal);
+                            if(!isNaN(d.getTime())) {
+                                const y = d.getFullYear();
+                                const m = String(d.getMonth() + 1).padStart(2, '0');
+                                const day = String(d.getDate()).padStart(2, '0');
+                                transactionDatesSet.add(`${y}-${m}-${day}`);
+                            }
+                        }
+                    });
+
+                    applyFilter();
+                }
+            } catch(err) { console.error('Gagal load data:', err); }
+        }
+
+        // ==========================================
+        // MONTH DROPDOWN
+        // ==========================================
+        function initMonthDropdown() {
+            const select = document.getElementById('monthSelect');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            
+            for(let y = currentYear - 2; y <= currentYear + 1; y++) {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = y;
+                monthNames.forEach((m, idx) => {
+                    const option = document.createElement('option');
+                    option.value = `${y}-${idx}`;
+                    option.textContent = m;
+                    optgroup.appendChild(option);
+                });
+                select.appendChild(optgroup);
+            }
+            select.value = `${now.getFullYear()}-${now.getMonth()}`;
+        }
+
+        // ==========================================
+        // TAB & FILTER LOGIC
+        // ==========================================
+        function setTab(tab, btnEl) {
+            currentTab = tab;
+            
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            if(btnEl) btnEl.classList.add('active');
+            
+            const dash = document.getElementById('dashboard');
+            dash.className = ''; 
+            if(tab === 'penjualan') dash.classList.add('tab-jual');
+            else if(tab === 'pembelian') dash.classList.add('tab-beli');
+            else if(tab === 'margin') dash.classList.add('tab-margin');
+
+            const l1 = document.getElementById('sumLabel1');
+            const l2 = document.getElementById('sumLabel2');
+            const l3 = document.getElementById('sumLabel3');
+            
+            if(tab === 'margin') {
+                l1.textContent = 'Total Jenis Item';
+                l2.textContent = 'Total Qty Terjual';
+                l3.textContent = 'Total Margin';
+            } else {
+                const type = tab === 'penjualan' ? 'Penjualan' : 'Pembelian';
+                l1.textContent = `Total Transaksi`;
+                l2.textContent = `Total Berat`;
+                l3.textContent = `Total ${type}`;
+            }
+
+            applyFilter();
+        }
+
+        function setPeriod(period, btnEl) {
+            currentPeriod = period;
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            if(btnEl) btnEl.classList.add('active');
+            
+            const dateGroup = document.getElementById('customDateGroup');
+            const monthGroup = document.getElementById('customMonthGroup');
+            
+            if(period === 'today') {
+                dateGroup.style.display = 'flex';
+                monthGroup.style.display = 'none';
+                
+                // Set default date ke hari ini saat switch ke mode tanggal
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('specificDate').value = today;
+                
+                updateDateHelperText(today);
+                applySpecificDate();
+            } else if(period === 'month') {
+                dateGroup.style.display = 'none';
+                monthGroup.style.display = 'flex';
+                applySpecificMonth();
+            } else if(period === 'all') {
+                dateGroup.style.display = 'none';
+                monthGroup.style.display = 'none';
+                applyFilter();
+            }
+        }
+
+        // Helper text untuk memberi tahu user tentang indikator tanggal
+        function updateDateHelperText(selectedDate) {
+            const helper = document.getElementById('dateHelperText');
+            if(transactionDatesSet.has(selectedDate)) {
+                helper.textContent = "✓ Ada transaksi";
+                helper.style.display = 'inline';
+                helper.style.color = 'var(--raj-primary)';
+            } else {
+                helper.textContent = "- Tidak ada transaksi";
+                helper.style.display = 'inline';
+                helper.style.color = 'var(--text-muted)';
+            }
+        }
+
+        // Event listener khusus untuk input date agar update helper text saat tanggal diganti
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('specificDate');
+            if(dateInput) {
+                dateInput.addEventListener('change', (e) => {
+                    updateDateHelperText(e.target.value);
+                });
+            }
+        });
+
+        function applySpecificDate() {
+            const buttons = document.querySelectorAll('.period-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            buttons[0].classList.add('active');
+            currentPeriod = 'today'; 
+            
+            const dateVal = document.getElementById('specificDate').value;
+            if(!dateVal) return;
+            
+            updateDateHelperText(dateVal);
+
+            const targetDate = new Date(dateVal);
+            targetDate.setHours(0,0,0,0);
+            const nextDay = new Date(targetDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+
+            filterAndRender(tx => {
+                const txDate = new Date(tx.Tanggal || tx.tanggal);
+                return !isNaN(txDate.getTime()) && txDate >= targetDate && txDate < nextDay;
+            });
+        }
+
+        function applySpecificMonth() {
+            const buttons = document.querySelectorAll('.period-btn');
+            buttons.forEach(b => b.classList.remove('active'));
+            buttons[1].classList.add('active');
+            currentPeriod = 'month';
+
+            const val = document.getElementById('monthSelect').value;
+            if(!val) return;
+            
+            const [year, month] = val.split('-').map(Number);
+            filterAndRender(tx => {
+                const txDate = new Date(tx.Tanggal || tx.tanggal);
+                return !isNaN(txDate.getTime()) && txDate.getFullYear() === year && txDate.getMonth() === month;
+            });
+        }
+
+        function applyFilter() {
+            if(currentPeriod === 'all') {
+                filterAndRender(() => true);
+            } else if(currentPeriod === 'today') {
+                applySpecificDate();
+            } else if(currentPeriod === 'month') {
+                applySpecificMonth();
+            }
+        }
+
+        function filterAndRender(conditionFn) {
+            if(currentTab === 'margin') {
+                const filteredJual = allData.penjualan.filter(conditionFn);
+                const filteredBeli = allData.pembelian.filter(conditionFn);
+                const combined = [...filteredJual, ...filteredBeli];
+                
+                combined.sort((a, b) => {
+                    const da = new Date(a.Tanggal || a.tanggal);
+                    const db = new Date(b.Tanggal || b.tanggal);
+                    return db - da;
+                });
+
+                calculateMargin(combined);
+            } else {
+                let sourceData = currentTab === 'penjualan' ? allData.penjualan : allData.pembelian;
+                filteredData = sourceData.filter(conditionFn);
+                
+                filteredData.sort((a, b) => {
+                    const da = new Date(a.Tanggal || a.tanggal);
+                    const db = new Date(b.Tanggal || b.tanggal);
+                    return db - da;
+                });
+
+                updateSummary();
+                renderGroupedList();
+            }
+        }
+
+        function calculateMargin(combinedData) {
+            const itemMap = {};
+            
+            combinedData.forEach(tx => {
+                const name = (tx.Nama_Barang_Material || tx.nama_barang_material || 'Unknown').trim();
+                if(!itemMap[name]) itemMap[name] = { jualQty: 0, jualTotal: 0, beliQty: 0, beliTotal: 0 };
+                
+                const qty = parseFloat(tx.Jumlah_Kg_Unit || tx.jumlah_kg_unit || 0);
+                const isJual = tx.Total_Penjualan !== undefined || tx.ID_Penjualan !== undefined;
+                
+                if(isJual) {
+                    const total = tx.Total_Penjualan || tx.total_penjualan || (qty * parseFloat(tx.Harga_Satuan || 0));
+                    itemMap[name].jualQty += qty;
+                    itemMap[name].jualTotal += parseFloat(total || 0);
+                } else {
+                    const total = tx.Total_Harga_HPP || tx.total_harga_hpp || (qty * parseFloat(tx.Harga_Satuan || 0));
+                    itemMap[name].beliQty += qty;
+                    itemMap[name].beliTotal += parseFloat(total || 0);
+                }
+            });
+
+            marginData = Object.entries(itemMap).map(([name, data]) => ({
+                name, ...data, margin: data.jualTotal - data.beliTotal
+            })).sort((a, b) => b.margin - a.margin);
+
+            updateSummary();
+            renderMarginTable();
+        }
+
+        // ==========================================
+        // RENDER CONTENT
+        // ==========================================
+        function updateSummary() {
+            const countEl = document.getElementById('sumCount');
+            const weightEl = document.getElementById('sumWeight');
+            const totalEl = document.getElementById('sumTotal');
+            
+            if(currentTab === 'margin') {
+                const totalItems = marginData.length;
+                const totalJualQty = marginData.reduce((s, i) => s + i.jualQty, 0);
+                const totalMargin = marginData.reduce((s, i) => s + i.margin, 0);
+
+                countEl.textContent = totalItems;
+                weightEl.textContent = totalJualQty.toFixed(2) + ' Kg';
+                totalEl.textContent = formatIDR(totalMargin);
+                
+                totalEl.className = 'summary-value ' + (totalMargin >= 0 ? 'positive' : 'negative');
+
+            } else {
+                const count = filteredData.length;
+                const totalWeight = filteredData.reduce((sum, tx) => sum + parseFloat(tx.Jumlah_Kg_Unit || tx.jumlah_kg_unit || 0), 0);
+                const totalAmount = filteredData.reduce((sum, tx) => {
+                    let total = 0;
+                    if(currentTab === 'penjualan') {
+                        total = tx.Total_Penjualan || tx.total_penjualan || (parseFloat(tx.Jumlah_Kg_Unit || 0) * parseFloat(tx.Harga_Satuan || 0));
+                    } else {
+                        total = tx.Total_Harga_HPP || tx.total_harga_hpp || (parseFloat(tx.Jumlah_Kg_Unit || 0) * parseFloat(tx.Harga_Satuan || 0));
+                    }
+                    return sum + parseFloat(total || 0);
+                }, 0);
+
+                countEl.textContent = count;
+                weightEl.textContent = totalWeight.toFixed(2) + ' Kg';
+                totalEl.textContent = formatIDR(totalAmount);
+                totalEl.className = 'summary-value';
+            }
+        }
+
+        function renderGroupedList() {
+            const container = document.getElementById('groupedListContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if(filteredData.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            const isJual = currentTab === 'penjualan';
+            
+            const groups = {};
+            filteredData.forEach(tx => {
+                const partner = isJual ? (tx.Nama_Buyer || tx.nama_buyer || 'Tanpa Nama') : (tx.Vendor_Supplier || tx.vendor_supplier || 'Tanpa Nama');
+                const dateKey = tx.Tanggal || tx.tanggal;
+                const groupKey = `${partner}|||${dateKey}`;
+                
+                if(!groups[groupKey]) {
+                    groups[groupKey] = {
+                        partner: partner,
+                        date: dateKey,
+                        items: [],
+                        totalWeight: 0,
+                        totalAmount: 0
+                    };
+                }
+                
+                const qty = parseFloat(tx.Jumlah_Kg_Unit || tx.jumlah_kg_unit || 0);
+                const price = parseFloat(tx.Harga_Satuan || tx.harga_satuan || 0);
+                let total = 0;
+                if(isJual) total = tx.Total_Penjualan || tx.total_penjualan || (qty * price);
+                else total = tx.Total_Harga_HPP || tx.total_harga_hpp || (qty * price);
+
+                groups[groupKey].items.push({ ...tx, qty, price, total });
+                groups[groupKey].totalWeight += qty;
+                groups[groupKey].totalAmount += parseFloat(total || 0);
+            });
+
+            const sortedGroups = Object.values(groups).sort((a, b) => {
+                const da = new Date(a.date);
+                const db = new Date(b.date);
+                if(db - da !== 0) return db - da;
+                return a.partner.localeCompare(b.partner);
+            });
+
+            let html = '';
+            sortedGroups.forEach((group) => {
+                const status = group.items[0].Status || group.items[0].status || 'Pending';
+                const statusClass = status.toLowerCase() === 'paid' ? 'status-paid' : 'status-pending';
+                
+                html += `<div class="vendor-card">
+                    <div class="vendor-header">
+                        <div class="vendor-info">
+                            <div class="vendor-icon"><i class="fa-solid fa-${isJual ? 'user' : 'truck'}"></i></div>
+                            <div class="vendor-details">
+                                <div class="vendor-name">${group.partner}</div>
+                                <div class="vendor-meta">
+                                    <span class="vendor-date-badge"><i class="fa-regular fa-calendar"></i> ${formatDate(group.date)}</span>
+                                    <span>${group.items.length} Item</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="vendor-stats">
+                            <div class="vendor-total">${formatIDR(group.totalAmount)}</div>
+                            <div class="vendor-weight"><i class="fa-solid fa-weight-hanging"></i> ${group.totalWeight.toFixed(2)} Kg</div>
+                        </div>
+                    </div>
+                    <div class="vendor-table-wrapper">
+                        <table class="vendor-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama Barang</th>
+                                    <th class="text-center">Qty (Kg)</th>
+                                    <th class="text-right">Harga/Kg</th>
+                                    <th class="text-right">Total</th>
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                group.items.forEach((item, idx) => {
+                    html += `<tr>
+                        <td>${idx + 1}</td>
+                        <td><strong>${item.Nama_Barang_Material || item.nama_barang_material || '-'}</strong></td>
+                        <td class="text-center">${item.qty.toFixed(2)}</td>
+                        <td class="text-right">${formatIDR(item.price)}</td>
+                        <td class="text-right"><strong>${formatIDR(parseFloat(item.total))}</strong></td>
+                        <td class="text-center"><span class="status-badge ${statusClass}">${status}</span></td>
+                    </tr>`;
+                });
+
+                html += `</tbody></table></div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderMarginTable() {
+            const container = document.getElementById('groupedListContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            if(marginData.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            emptyState.style.display = 'none';
+
+            let html = `<div class="vendor-card">
+                <div class="vendor-header" style="background: var(--raj-light);">
+                    <div class="vendor-info">
+                        <div class="vendor-icon" style="background:white; color:var(--raj-primary);"><i class="fa-solid fa-scale-balanced"></i></div>
+                        <div class="vendor-details">
+                            <div class="vendor-name">Rekapitulasi Margin per Item</div>
+                            <div class="vendor-meta">Periode: ${currentPeriod === 'today' ? 'Tanggal Terpilih' : (currentPeriod === 'month' ? 'Bulan Terpilih' : 'Semua Data')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="vendor-table-wrapper">
+                    <table class="vendor-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama Barang</th>
+                                <th class="text-right">Qty Jual</th>
+                                <th class="text-right">Total Jual</th>
+                                <th class="text-right">Qty Beli</th>
+                                <th class="text-right">Total Beli</th>
+                                <th class="text-right">Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            marginData.forEach((item, idx) => {
+                const marginClass = item.margin >= 0 ? 'margin-positive' : 'margin-negative';
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><strong>${item.name}</strong></td>
+                    <td class="text-right">${item.jualQty.toFixed(2)} Kg</td>
+                    <td class="text-right">${formatIDR(item.jualTotal)}</td>
+                    <td class="text-right">${item.beliQty.toFixed(2)} Kg</td>
+                    <td class="text-right">${formatIDR(item.beliTotal)}</td>
+                    <td class="text-right ${marginClass}">${formatIDR(item.margin)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table></div></div>';
+            container.innerHTML = html;
+        }
+
+        // ==========================================
+        // EXPORT EXCEL
+        // ==========================================
+        function exportExcel() {
+            if(currentTab === 'margin' && marginData.length === 0) {
+                alert('Tidak ada data margin untuk di-export.');
+                return;
+            }
+            if(currentTab !== 'margin' && filteredData.length === 0) {
+                alert('Tidak ada data untuk di-export.');
+                return;
+            }
+
+            const periodLabels = { 'today': 'Per-Tanggal', 'month': 'Per-Bulan', 'all': 'Semua' };
+            const periodLabel = periodLabels[currentPeriod] || 'Data';
+            const dateStr = new Date().toISOString().slice(0, 10);
+            
+            let fileName = '';
+            let exportData = [];
+
+            if(currentTab === 'margin') {
+                fileName = `Margin-RAJ-${periodLabel}-${dateStr}.xlsx`;
+                exportData = marginData.map((item, i) => ({
+                    'No': i+1, 'Nama Barang': item.name, 
+                    'Qty Jual': item.jualQty, 'Total Jual': item.jualTotal,
+                    'Qty Beli': item.beliQty, 'Total Beli': item.beliTotal,
+                    'Margin': item.margin
+                }));
+
+            } else {
+                const typeLabel = currentTab === 'penjualan' ? 'Penjualan' : 'Pembelian';
+                fileName = `${typeLabel}-RAJ-${periodLabel}-${dateStr}.xlsx`;
+                
+                exportData = filteredData.map((tx, idx) => {
+                    const isJual = currentTab === 'penjualan';
+                    const docNo = isJual ? (tx.ID_Penjualan || tx.id_penjualan) : (tx.ID_Pembelian || tx.id_pembelian);
+                    const partner = isJual ? (tx.Nama_Buyer || tx.nama_buyer) : (tx.Vendor_Supplier || tx.vendor_supplier);
+                    const qty = parseFloat(tx.Jumlah_Kg_Unit || tx.jumlah_kg_unit || 0);
+                    const price = parseFloat(tx.Harga_Satuan || tx.harga_satuan || 0);
+                    let total = 0;
+                    if(isJual) total = tx.Total_Penjualan || tx.total_penjualan || (qty * price);
+                    else total = tx.Total_Harga_HPP || tx.total_harga_hpp || (qty * price);
+
+                    return {
+                        'No': idx + 1,
+                        'No. Dokumen': docNo || '-',
+                        'Tanggal': formatDate(tx.Tanggal || tx.tanggal),
+                        [isJual ? 'Customer' : 'Vendor']: partner || '-',
+                        'Nama Barang': tx.Nama_Barang_Material || tx.nama_barang_material || '-',
+                        'Qty (Kg)': qty,
+                        'Harga/Kg': price,
+                        [`Total ${typeLabel}`]: parseFloat(total),
+                        'Status': tx.Status || tx.status || 'Pending'
+                    };
+                });
+            }
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, currentTab === 'margin' ? 'Margin' : (currentTab === 'penjualan' ? 'Penjualan' : 'Pembelian'));
+            XLSX.writeFile(wb, fileName);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if(!checkSession()) return;
+        });
+    </script>
+</body>
+</html>
